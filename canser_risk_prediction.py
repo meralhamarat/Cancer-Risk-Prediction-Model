@@ -8,8 +8,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 
 # Veri Yükleme
-file_path = 'cancer_risk_data.csv'  # CSV dosyasının adı
-data = pd.read_csv(file_path)
+file_path = 'cancer_risk_data.csv'  # CSV dosyasının yolu
+try:
+    data = pd.read_csv(file_path)
+    print("Veri seti başarıyla yüklendi.")
+except FileNotFoundError:
+    print(f"Hata: {file_path} dosyası bulunamadı.")
+    exit()
 
 # Veri İnceleme
 print("Veri setinin ilk 5 satırı:")
@@ -19,26 +24,41 @@ print("\nVeri setinin istatistiksel özetleri:")
 print(data.describe())
 
 # Eksik Değerlerin Kontrolü
+missing_values = data.isnull().sum()
 print("\nEksik değerlerin kontrolü:")
-print(data.isnull().sum())
+print(missing_values)
 
 # Eksik Değerlerin İşlenmesi
-# (Bu veri setinde eksik değer olmadığını varsayıyoruz, eğer olsaydı doldurabilirdik)
-# data['Cholesterol'] = data['Cholesterol'].fillna(data['Cholesterol'].mean())
+if missing_values.any():
+    print("\nEksik değerler bulundu. İlgili sütunlar işleniyor...")
+    data.fillna(data.mean(), inplace=True)
+    print("Eksik değerler dolduruldu.")
+else:
+    print("Eksik değer bulunamadı.")
 
 # Cinsiyet Verisini Encode Etme
-# Gender sütununu 0 (Female) ve 1 (Male) olarak encode ediyoruz
-data['Gender'] = data['Gender'].map({'Female': 0, 'Male': 1})
+if 'Gender' in data.columns:
+    data['Gender'] = data['Gender'].map({'Female': 0, 'Male': 1})
+    print("\n'Cinsiyet' sütunu encode edildi.")
+else:
+    print("\nUyarı: 'Gender' sütunu bulunamadı, encode işlemi atlandı.")
 
 # Veriyi Görselleştirme
-plt.figure(figsize=(10, 6))
-sns.countplot(x='CancerRisk', data=data)
-plt.title('Kanser Riski Dağılımı')
-plt.show()
+if 'CancerRisk' in data.columns:
+    plt.figure(figsize=(10, 6))
+    sns.countplot(x='CancerRisk', data=data)
+    plt.title('Kanser Riski Dağılımı')
+    plt.show()
+else:
+    print("\nUyarı: 'CancerRisk' sütunu bulunamadı, görselleştirme atlandı.")
 
 # Özellik ve Hedef Değişkenlerin Ayrılması
-X = data.drop('CancerRisk', axis=1)  # Hedef dışındaki sütunlar özellikler
-y = data['CancerRisk']  # Hedef değişken
+if 'CancerRisk' in data.columns:
+    X = data.drop('CancerRisk', axis=1)
+    y = data['CancerRisk']
+else:
+    print("\nHata: 'CancerRisk' sütunu bulunamadı, işlem sonlandırılıyor.")
+    exit()
 
 # Veriyi Eğitim ve Test Setlerine Ayırma
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
