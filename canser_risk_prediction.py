@@ -1,93 +1,54 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
-# Veri Yükleme
-file_path = 'cancer_risk_data.csv'  # CSV dosyasının yolu
-try:
-    data = pd.read_csv(file_path)
-    print("Veri seti başarıyla yüklendi.")
-except FileNotFoundError:
-    print(f"Hata: {file_path} dosyası bulunamadı.")
-    exit()
+# Veriyi yükleme
+data = pd.read_csv("cancer_risk_data.csv")
 
-# Veri İnceleme
-print("Veri setinin ilk 5 satırı:")
-print(data.head())
+# Cinsiyet sütununu sayısal yapalım
+data['Gender'] = data['Gender'].map({'Female': 0, 'Male': 1})
 
-print("\nVeri setinin istatistiksel özetleri:")
-print(data.describe())
+# Özellik ve hedef ayrımı
+X = data.drop('CancerRisk', axis=1)
+y = data['CancerRisk']
 
-# Eksik Değerlerin Kontrolü
-missing_values = data.isnull().sum()
-print("\nEksik değerlerin kontrolü:")
-print(missing_values)
-
-# Eksik Değerlerin İşlenmesi
-if missing_values.any():
-    print("\nEksik değerler bulundu. İlgili sütunlar işleniyor...")
-    data.fillna(data.mean(), inplace=True)
-    print("Eksik değerler dolduruldu.")
-else:
-    print("Eksik değer bulunamadı.")
-
-# Cinsiyet Verisini Encode Etme
-if 'Gender' in data.columns:
-    data['Gender'] = data['Gender'].map({'Female': 0, 'Male': 1})
-    print("\n'Cinsiyet' sütunu encode edildi.")
-else:
-    print("\nUyarı: 'Gender' sütunu bulunamadı, encode işlemi atlandı.")
-
-# Veriyi Görselleştirme
-if 'CancerRisk' in data.columns:
-    plt.figure(figsize=(10, 6))
-    sns.countplot(x='CancerRisk', data=data)
-    plt.title('Kanser Riski Dağılımı')
-    plt.show()
-else:
-    print("\nUyarı: 'CancerRisk' sütunu bulunamadı, görselleştirme atlandı.")
-
-# Özellik ve Hedef Değişkenlerin Ayrılması
-if 'CancerRisk' in data.columns:
-    X = data.drop('CancerRisk', axis=1)
-    y = data['CancerRisk']
-else:
-    print("\nHata: 'CancerRisk' sütunu bulunamadı, işlem sonlandırılıyor.")
-    exit()
-
-# Veriyi Eğitim ve Test Setlerine Ayırma
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Veriyi Ölçeklendirme
+# Ölçeklendirme
 scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+X_scaled = scaler.fit_transform(X)
 
-# Makine Öğrenimi Modeli Eğitimi
+# Eğitim ve test verisine ayırma
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+
+# Model eğitimi
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Modelin Değerlendirilmesi
+# Test verisinde tahmin yap
 y_pred = model.predict(X_test)
-print("\nSınıflandırma Raporu:")
-print(classification_report(y_test, y_pred))
 
-print("\nKarışıklık Matrisi:")
-print(confusion_matrix(y_test, y_pred))
+# Doğruluk skoru
+acc = accuracy_score(y_test, y_pred)
+print("Doğruluk Oranı:", acc)
 
-# Özellik Önem Düzeylerinin Görselleştirilmesi
+# Feature importance (Özellik önemi)
 importances = model.feature_importances_
 features = X.columns
-indices = np.argsort(importances)[::-1]
 
-plt.figure(figsize=(10, 6))
-plt.title("Özelliklerin Önemi")
-plt.bar(range(X.shape[1]), importances[indices], align='center')
-plt.xticks(range(X.shape[1]), features[indices], rotation=90)
-plt.tight_layout()
+# Özellik önemini çizdirme
+plt.figure(figsize=(8,5))
+plt.bar(features, importances, color='lightcoral')
+plt.title('Özelliklerin Modeldeki Önemi')
+plt.ylabel('Önem Skoru')
+plt.ylim(0, max(importances) + 0.05)
+plt.xticks(rotation=45)
+plt.show()
+
+# Confusion matrix çizdirme
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot(cmap=plt.cm.Blues)
+plt.title('Confusion Matrix')
 plt.show()
