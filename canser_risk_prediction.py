@@ -5,24 +5,18 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
-# Veriyi yükleme
 data = pd.read_csv("cancer_risk_data.csv")
 
-# Cinsiyet sütununu sayısal yapalım
 data['Gender'] = data['Gender'].map({'Female': 0, 'Male': 1})
 
-# Özellik ve hedef ayrımı
 X = data.drop('CancerRisk', axis=1)
 y = data['CancerRisk']
 
-# Ölçeklendirme
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Eğitim ve test verisine ayırma
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
 
-# Model eğitimi
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
