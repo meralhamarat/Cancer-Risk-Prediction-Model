@@ -20,18 +20,14 @@ X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, 
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Test verisinde tahmin yap
 y_pred = model.predict(X_test)
 
-# Doğruluk skoru
 acc = accuracy_score(y_test, y_pred)
 print("Doğruluk Oranı:", acc)
 
-# Feature importance (Özellik önemi)
 importances = model.feature_importances_
 features = X.columns
 
-# Özellik önemini çizdirme
 plt.figure(figsize=(8,5))
 plt.bar(features, importances, color='lightcoral')
 plt.title('Özelliklerin Modeldeki Önemi')
@@ -40,7 +36,6 @@ plt.ylim(0, max(importances) + 0.05)
 plt.xticks(rotation=45)
 plt.show()
 
-# Confusion matrix çizdirme
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 disp.plot(cmap=plt.cm.Blues)
